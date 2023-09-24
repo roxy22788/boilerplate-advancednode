@@ -34,31 +34,44 @@ myDB(async client => {
   app.route('/').get((req, res) => {
     res.render('index', {
       title: 'Connected to Database',
-      message: 'Please log in'
-    });
-  });
+      message: 'Please log in',
+      showLogin: true
+    })
+  }
+  );
+
+  app.route('/login').post(
+    passport.authenticate('local', { failureRedirect: '/' }),
+    (req, res) => {
+      res.redirect('/profile');
+    }
+  );
+
+  app.route('/profile').get((req, res) => {
+    res.render('profile');
+  })
 
   passport.use(new LocalStrategy((username, password, done) => {
-    myDataBase.findOne({username: username}, (err, user) =>{
+    myDataBase.findOne({ username: username }, (err, user) => {
       console.log(`User ${username} attemped to log in`);
       if (err) return done(err);
       if (!user) return done(null, false);
       if (password !== user.password) return (null, false);
       return done(null, user);
     })
-    
+
   }));
-  
+
   passport.serializeUser((user, done) => {
     done(null, user._id);
   })
-  
+
   passport.deserializeUser((id, done) => {
     myDataBase.findOne({ _id: new ObjectID(id) }, (err, doc) => {
       done(null, doc);
     });
   });
-  
+
 }).catch(err => {
   app.route('/').get((req, res) => {
     res.render('index', { title: e, message: 'Unable to connect to database' });
